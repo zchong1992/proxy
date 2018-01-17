@@ -1,0 +1,6 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)  
+PROJECT(proxy)
+ADD_SUBDIRECTORY(basesdk)  
+include_directories(inc basesdk)
+target_link_libraries(proxy  "libbaseservice.a")
+add_executable(proxy socket_server.cpp)
