@@ -30,11 +30,25 @@
 #include "libbaseservice.h"
 #define MYPORT  8887
 #define QUEUE   20
-#define BUFFER_SIZE 1024
 int g_local_port;
 int g_remote_port;
+char g_local_ip[1024];
 char g_remote_ip[1024];
 using namespace baseservice;
+int check_is_ip(const char*str)
+{
+	int len=strlen(str);
+	int index=0;
+	for(index=0;index<len;index++)
+	{
+		if(str[index]='.')
+			continue;
+		if(str[index]>='0'&&str[index]<='9')
+			continue;
+		return 0;
+	}
+	return 1;
+}
 void initLog()
 {
 	znlog::getInstance()->Init();
@@ -76,6 +90,7 @@ void *socket_client_thread(void*Para)
     remote_addr.sin_family = AF_INET;
     remote_addr.sin_port = htons(g_remote_port);
 	char remote_ipaddr[1024];
+	char local_ipaddr[1024];
 	char readbuf[1024];
 	int readlen=0;
 	int sendret=0;
@@ -85,10 +100,29 @@ void *socket_client_thread(void*Para)
     struct timeval tv;
     fd_set fdset;
     fd_set efdset;
-	if(!hostname_to_ip(g_remote_ip,remote_ipaddr))
+	if(!check_is_ip(g_remote_ip))
 	{
-        SYS_LOG(INFO,"resolved %s to %s fail\n",g_remote_ip,remote_ipaddr);
-		goto END;
+		if(!hostname_to_ip(g_remote_ip,remote_ipaddr))
+		{
+		    SYS_LOG(INFO,"resolved %s to %s fail\n",g_remote_ip,remote_ipaddr);
+			goto END;
+		}
+	}
+	else
+	{
+		strcpy(remote_ipaddr,g_remote_ip);
+	}
+	if(!check_is_ip(g_local_ip))
+	{
+		if(!hostname_to_ip(g_local_ip,local_ipaddr))
+		{
+		    SYS_LOG(INFO,"resolved %s to %s fail\n",g_local_ip,local_ipaddr);
+			goto END;
+		}
+	}
+	else
+	{
+		strcpy(local_ipaddr,g_local_ip);
 	}
     //SYS_LOG(INFO,"resolved %s to %s\n",g_remote_ip,remote_ipaddr);
 	
@@ -118,7 +152,7 @@ void *socket_client_thread(void*Para)
 			//SYS_LOG(INFO,"select timeout %d\n",nready);
 			
 			continue;
-		}
+		}
 		if(FD_ISSET(client_fd,&fdset))
 		{
         	//SYS_LOG(INFO,"FD_ISSET(client_fd,&fdset) %d\n",nready);
@@ -153,7 +187,7 @@ void *socket_client_thread(void*Para)
         	
 			goto END;
 		}
-	}
+	}
 END:
 	
     SYS_LOG(INFO,"END local recv/send %d/%d remote recv/send %d/%d\n"
@@ -174,16 +208,24 @@ int main(int argc,char * argv[])
 {
 
 	initLog();
-    if(argc<4)
+    if(argc<5)
 	{
-		SYS_LOG(INFO,"need remote ip remote port local port\n",argc);
+		SYS_LOG(INFO,"need remote ip and port local ip and port\n",argc);
     	return 0;
 	}
 	strcpy(g_remote_ip,argv[1]);
 	g_remote_port=atoi(argv[2]);
-	g_local_port=atoi(argv[3]);
-	SYS_LOG(INFO,"local port  %d connect to [%s:%d]\n",g_local_port,g_remote_ip,g_remote_port);
+	strcpy(g_local_ip,argv[3]);
+	g_local_port=atoi(argv[4]);
+	SYS_LOG(INFO,"remote port [%s:%d] connect to [%s:%d]\n",g_remote_ip,g_remote_port,g_local_ip,g_local_port);
 	
+	char remote_ipaddr[1024];
+	
+	if(!hostname_to_ip(g_remote_ip,remote_ipaddr))
+	{
+        SYS_LOG(INFO,"resolved %s to %s fail\n",g_remote_ip,remote_ipaddr);
+		goto END;
+	}
 
     int server_sockfd = socket(AF_INET,SOCK_STREAM, 0);
 	int opt=1;
@@ -205,7 +247,6 @@ int main(int argc,char * argv[])
         perror("listen");
         exit(1);
     }
-    char buffer[BUFFER_SIZE];
     struct sockaddr_in client_addr;
     socklen_t length = sizeof(client_addr);
 	while(1)
