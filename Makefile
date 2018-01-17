@@ -1,23 +1,36 @@
 MACRO = DEBUGALL
 CFLAGS+= -g -O2  -fPIC  -w -rdynamic  -Wall -Wunused -W -D$(MACRO)
-SOURCES = $(wildcard *.cpp)
-OBJS := $(patsubst %.cpp, %.o,$(SOURCES))
+SOURCES1 = socket_server_online.cpp
+SOURCES2 = socket_server_offline.cpp
+OBJS1 := $(patsubst %.cpp, %.o,$(SOURCES1))
+
+OBJS2 := $(patsubst %.cpp, %.o,$(SOURCES2))
 #MYOBJS :=$(notdir, $(OBJS))
-XDS := $(patsubst %.cpp, %.d,$(SOURCES))
+XDS1 := $(patsubst %.cpp, %.d,$(SOURCES1))
+
+XDS2 := $(patsubst %.cpp, %.d,$(SOURCES2))
+
 INC= -I./basesdk/
 LIBS=basesdk/libbaseservice.a -lpthread
 CC = g++
 AR=ar
 RM=-rm
-TARGET=proxyserver
-$(TARGET): $(OBJS)
-	$(CC) -o $(TARGET) $(OBJS)  $(LIBS)
+TARGET1=server_online
+TARGET2=server_offline
+all:$(TARGET1) $(TARGET2)
+
+$(TARGET1): $(OBJS1)
+	$(CC) -o $(TARGET1) $(OBJS1)  $(LIBS)
+	
+$(TARGET2): $(OBJS2)
+	$(CC) -o $(TARGET2) $(OBJS2)  $(LIBS)
 
 #@echo "source files:" $(SOURCES)
 #@echo "object files:" $(OBJS)
 #@echo "$@ depend on $^ ? $* $(*F) $^"
 
--include $(XDS) 
+-include $(XDS1) 
+-include $(XDS2) 
 %d: %cpp
 	@$(CC) -MM $(CFLAGS) $< $(INC) > $@.dd; 
 	@sed -i 's,\($(*F)\)o[ :]*,$(*D)/\1o: ,g'  $@.dd ; 
@@ -27,7 +40,7 @@ $(TARGET): $(OBJS)
 	@$(RM) $@.dd
 
 clean:
-	$(RM) -rf $(OBJS)
-	$(RM) -rf $(XDS)
-	$(RM) -f main
+	$(RM) -rf $(OBJS1) $(OBJS2)
+	$(RM) -rf $(XDS1) $(XDS2)
+	$(RM) -f  $(TARGET1) $(TARGET2)
 

@@ -84,12 +84,13 @@ void *socket_client_thread(void*Para)
 	
     struct timeval tv;
     fd_set fdset;
+    fd_set efdset;
 	if(!hostname_to_ip(g_remote_ip,remote_ipaddr))
 	{
         SYS_LOG(INFO,"resolved %s to %s fail\n",g_remote_ip,remote_ipaddr);
 		goto END;
 	}
-    SYS_LOG(INFO,"resolved %s to %s\n",g_remote_ip,remote_ipaddr);
+    //SYS_LOG(INFO,"resolved %s to %s\n",g_remote_ip,remote_ipaddr);
 	
     remote_addr.sin_addr.s_addr = inet_addr(remote_ipaddr);
 	
@@ -98,16 +99,20 @@ void *socket_client_thread(void*Para)
         SYS_LOG(INFO,"connect %s:%d fail\n",g_remote_ip,g_remote_port);
         goto END;
     }
-    SYS_LOG(INFO,"connected %s:%d \n",g_remote_ip,g_remote_port);
+    //SYS_LOG(INFO,"connected %s:%d \n",g_remote_ip,g_remote_port);
 	while(1)
 	{
 	    FD_ZERO(&fdset);
 	    FD_SET(client_fd, &fdset);
 		FD_SET(remote_fd, &fdset);
+	    FD_ZERO(&efdset);
+	    FD_SET(client_fd, &efdset);
+		FD_SET(remote_fd, &efdset);
+     ;
 		tv.tv_sec = 0;
 		tv.tv_usec = 100000;
 		int maxIndex=(client_fd>remote_fd?client_fd:remote_fd )+1;
-		nready = select(maxIndex, &fdset, NULL, NULL, &tv);
+		nready = select(maxIndex, &fdset, NULL, &efdset, &tv);
 		if(nready==0)
 		{
 			//SYS_LOG(INFO,"select timeout %d\n",nready);
@@ -116,7 +121,7 @@ void *socket_client_thread(void*Para)
 		}
 		if(FD_ISSET(client_fd,&fdset))
 		{
-        	SYS_LOG(INFO,"FD_ISSET(client_fd,&fdset) %d\n",nready);
+        	//SYS_LOG(INFO,"FD_ISSET(client_fd,&fdset) %d\n",nready);
 			readlen=recv(client_fd, readbuf, 1024,0);
 			peer_size[0][0]+=readlen;
 			if(readlen<=0)
@@ -128,7 +133,7 @@ void *socket_client_thread(void*Para)
 		}
 		if(FD_ISSET(remote_fd,&fdset))
 		{
-        	SYS_LOG(INFO,"FD_ISSET(remote_fd,&fdset) %d\n",nready);
+        	//SYS_LOG(INFO,"FD_ISSET(remote_fd,&fdset) %d\n",nready);
 			readlen=recv(remote_fd, readbuf, 1024,0);
 			peer_size[1][0]+=sendret;
 			if(readlen<=0)
@@ -137,6 +142,16 @@ void *socket_client_thread(void*Para)
 			peer_size[0][1]+=sendret;
 			if(ret<=0)
 				goto END;
+		}
+        
+        if(FD_ISSET(client_fd,&efdset))
+		{
+			goto END;
+		}
+		if(FD_ISSET(remote_fd,&efdset))
+		{
+        	
+			goto END;
 		}
 	}
 END:
