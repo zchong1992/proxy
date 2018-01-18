@@ -43,18 +43,18 @@ typedef struct socketPair
 	int remoteData[2];
 	socketPair(){memset(this,0,sizeof(socketPair));}
 	socketPair(socketPair &_A){memcpy(this,&_A,sizeof(socketPair));}
-	
 }SPair;
 
 typedef vector<SPair> VSP;
 typedef vector<SPair>::iterator VSPI;
-
+typedef vector<int> VSOCK;
+typedef vector<int>::iterator VSOCKI;
 
 void initLog()
 {
 	znlog::getInstance()->Init();
 	znlog::getInstance()->set_level(INFO,INFO);
-	znlog::getInstance()->set_log_file("log.txt");
+	znlog::getInstance()->set_log_file("server_online_log.txt");
 }
 inline int max(int a,int b)
 {
@@ -68,6 +68,8 @@ void closeFd(VSP &A,VSPI it)
 int main(int argc,char * argv[])
 {
 	vector<SPair> sockList;
+    VSOCK  clientList;
+    VSOCK  mList;
 
 	
 	initLog();
@@ -95,26 +97,26 @@ int main(int argc,char * argv[])
 
     if(bind(client_listen_sockfd,(struct sockaddr *)&server_sockaddr,sizeof(server_sockaddr))==-1)
     {
-        perror("bind");
+        perror("client_listen_sockfd");
         exit(1);
     }
 	
     server_sockaddr.sin_port = htons(g_remote_port);
     if(bind(server_sockfd,(struct sockaddr *)&server_sockaddr,sizeof(server_sockaddr))==-1)
     {
-        perror("bind");
+        perror("server_sockfd ");
         exit(1);
     }
 	
 
     if(listen(client_listen_sockfd,1024) == -1)
     {
-        perror("listen");
+        perror("client_listen_sockfd");
         exit(1);
     }
     if(listen(server_sockfd,1024) == -1)
     {
-        perror("listen");
+        perror("server_sockfd");
         exit(1);
     }
     struct sockaddr_in client_addr;
@@ -160,16 +162,46 @@ int main(int argc,char * argv[])
 		{
 			int client=accept(client_listen_sockfd, (struct sockaddr*)&client_addr, &length);
         	SYS_LOG(INFO,"new client connected %d\n",nready);
+            if(mList.size()>0)
+            {
+                SPair unit;
+                unit.clientFd=client;
+                VSOCKI it=mList.begin();
+                unit.remoteFd=*it;
+                mList.erase(it);
+            }
+            else
+            {
+                clientList.push_back(client);
+            }
+            nready--;
 			
 		}
 		if(FD_ISSET(server_sockfd,&rfdset))
 		{
-			int client=accept(server_sockfd, (struct sockaddr*)&client_addr, &length);
+			int remoteSock=accept(server_sockfd, (struct sockaddr*)&client_addr, &length);
         	SYS_LOG(INFO,"FD_ISSET(server_sockfd,&rfdset) %d\n",nready);
-			
+            if(clientList.size()>0)
+            {
+                SPair unit;
+                unit.remoteFd=remoteSock;
+                VSOCKI it=clientList.begin();
+                unit.clientFd=*it;
+                clientList.erase(it);
+            }
+            else
+            {
+                mList.push_back(remoteSock);
+            }
+            nready--;
 		}
 		for(it=sockList.begin();it!=sockList.end();it++)
 		{
+		
+            if(nready==0)
+    		{
+    			break;
+    		}
 			if(FD_ISSET((*it).clientFd,&rfdset))
 			{
 				readlen=recv((*it).clientFd, writebuf, 10240,0);
@@ -209,7 +241,10 @@ int main(int argc,char * argv[])
 		// do  exception
 		for(it=sockList.begin();it!=sockList.end();it++)
 		{
-
+            if(nready==0)
+    		{
+    			break;
+    		}
 			if(FD_ISSET((*it).clientFd,&efdset))
 			{
 					closeFd(sockList,it);
