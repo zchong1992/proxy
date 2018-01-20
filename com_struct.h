@@ -38,9 +38,9 @@
 typedef struct socketPair
 {
     int clientFd;
-    int remoteFd;
+    int zopenFd;
     int clientData[2];
-    int remoteData[2];
+    int zopenData[2];
     socketPair();
     socketPair(const socketPair &_A);
     socketPair& operator=(const socketPair &_A);
@@ -56,6 +56,8 @@ int check_is_ip(const char*str);
 int hostname_to_ip(const char * hostname , char* ip);
 void closeFd(VSP &A,VSPI it);
 
+
+int createConnect(const char *host,int port);
 
 #endif
 
