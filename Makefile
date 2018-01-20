@@ -1,7 +1,7 @@
 MACRO = DEBUGALL
-CFLAGS+= -g -O2  -fPIC  -w -rdynamic  -Wall -Wunused -W -D$(MACRO)
-SOURCES1 = socket_server_online.cpp
-SOURCES2 = socket_server_offline.cpp
+CFLAGS+= -g -O0  -fPIC  -w -rdynamic  -Wall -Wunused -W -D$(MACRO)
+SOURCES1 = socket_server_online.cpp  com_struct.cpp
+SOURCES2 = socket_server_offline.cpp  com_struct.cpp
 OBJS1 := $(patsubst %.cpp, %.o,$(SOURCES1))
 
 OBJS2 := $(patsubst %.cpp, %.o,$(SOURCES2))
@@ -38,7 +38,6 @@ $(TARGET2): $(OBJS2)
 	@echo "\t$(CC) $(CFLAGS) $(INC) -c -o $*o $< $(INC)" >>$@; 
 	@echo "\t@echo '' >> $@ " >>$@; 
 	@$(RM) $@.dd
-
 clean:
 	$(RM) -rf $(OBJS1) $(OBJS2)
 	$(RM) -rf $(XDS1) $(XDS2)
