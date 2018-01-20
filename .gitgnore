@@ -1,0 +1,10 @@
+*.o
+*.d
+*.iab
+*.iad
+*.imb
+*.pfi
+*.po
+*.pr
+*.pri
+*.ps
