@@ -39,21 +39,24 @@ int check_is_ip(const char*str)
 }
 
 
-void closeFd(VSP &A,VSPI it)
+VSPI CloseFd(VSP &A,VSPI it,const char * file,int line)
 {
     close((*it).clientFd);
     close((*it).zopenFd);
-    SYS_LOG(INFO,"close fd pair,(%d,%d,%d,%d)\n"
+    SYS_LOG(INFO,"close fd pair,(%d,%d,%d,%d)at %s:%d\n"
         ,(*it).clientData[0]
         ,(*it).clientData[1]
         ,(*it).zopenData[0]
-        ,(*it).zopenData[1]);
-    A.erase(it);
+        ,(*it).zopenData[1]
+        ,file
+        ,line);
+    it=A.erase(it);
+	return it;
 }
 int hostname_to_ip(const char * hostname , char* ip)
 {
     if(check_is_ip(hostname))
-    {
+    {
         strcpy(ip,hostname);
         return 1;
     }
@@ -103,7 +106,7 @@ int createConnect(const char *host,int port)
         SYS_LOG(INFO,"connect fail ret %d\n",ret);
         close(sock);
         return 0;
-    }
+    }
     return sock;
     
 }

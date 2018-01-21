@@ -84,7 +84,7 @@ int main(int argc,char * argv[])
     {
         FD_ZERO(&rfdset);
         FD_ZERO(&efdset);
-        tv.tv_sec = 0;
+        tv.tv_sec = 1;
         tv.tv_usec = 0;
        
         int maxIndex=0;
@@ -122,13 +122,14 @@ int main(int argc,char * argv[])
         
         maxIndex+=1;
         int nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
+       // int nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
         if(nready==0)
         {
             usleep(10);
             continue;
         }
         
-        for(it=connectedList.begin();it!=connectedList.end();it++)
+        for(it=connectedList.begin();it!=connectedList.end();)
         {
             if(FD_ISSET((*it).clientFd,&rfdset))
             {
@@ -136,14 +137,14 @@ int main(int argc,char * argv[])
                 (*it).clientData[0]+=readlen;
                 if(readlen<=0)
                 {
-                    closeFd(connectedList,it);
+                    it=closeFd(connectedList,it);
                     continue;
                 }
                 int ret=send((*it).zopenFd,writebuf,readlen,0);
                 (*it).zopenData[1]+=ret;
                 if(ret<=0)
                 {
-                    closeFd(connectedList,it);
+                    it=closeFd(connectedList,it);
                     continue;
                 }
             }
@@ -153,20 +154,21 @@ int main(int argc,char * argv[])
                 (*it).zopenData[0]+=readlen;
                 if(readlen<=0)
                 {
-                    closeFd(connectedList,it);
+                    it=closeFd(connectedList,it);
                     continue;
                 }
                 int ret=send((*it).clientFd,writebuf,readlen,0);
                 (*it).clientData[1]+=ret;
                 if(ret<=0)
                 {
-                    closeFd(connectedList,it);
+                    it=closeFd(connectedList,it);
                     continue;
                 }
             }
+			it++;
         }
         
-        for(vit=zopenList.begin();vit!=zopenList.end();vit++)
+        for(vit=zopenList.begin();vit!=zopenList.end();)
         {
             if(FD_ISSET((*vit),&rfdset))
             {
@@ -177,45 +179,52 @@ int main(int argc,char * argv[])
                     SPair unit;
                     unit.clientFd=clientSock;
                     unit.zopenFd=localSock;
-                    zopenList.erase(vit);
+                    vit=zopenList.erase(vit);
                     connectedList.push_back(unit);
 					SYS_LOG(INFO,"connect client current connectedList size %d\tzopenList size %d\n"
 					,connectedList.size()
 					,zopenList.size());
+					continue;
                 }
             }
+			vit++;
         }
 		
-        for(it=connectedList.begin();it!=connectedList.end();it++)
+        for(it=connectedList.begin();it!=connectedList.end();)
         {
             if(FD_ISSET((*it).zopenFd,&efdset))
             {
-            	closeFd(connectedList, it);
+            	it=closeFd(connectedList, it);
 				SYS_LOG(INFO,"disconnect client current connectedList size %d\tzopenList size %d\n"
 					,connectedList.size()
 					,zopenList.size());
+				continue;
                 
             }
             if(FD_ISSET((*it).clientFd,&efdset))
             {
-            	closeFd(connectedList, it);
+            	it=closeFd(connectedList, it);
 				SYS_LOG(INFO,"disconnect client current connectedList size %d\tzopenList size %d\n"
 					,connectedList.size()
 					,zopenList.size());
+				continue;
                 
             }
+            it++;
         }
-		for(vit=zopenList.begin();vit!=zopenList.end();vit++)
+		for(vit=zopenList.begin();vit!=zopenList.end();)
         {
             if(FD_ISSET((*vit),&efdset))
             {
             	close(*vit);
-                zopenList.erase(vit);
+                vit=zopenList.erase(vit);
 				SYS_LOG(INFO,"connect client current connectedList size %d\tzopenList size %d\n"
 				,connectedList.size()
 				,zopenList.size());
+				continue;
                 
             }
+			vit++;
         }
 		
     }
