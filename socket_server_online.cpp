@@ -97,8 +97,8 @@ int main(int argc,char * argv[])
         FD_ZERO(&rfdset);
         FD_ZERO(&efdset);
         FD_SET(listen_fd, &rfdset);
-        FD_SET(zopen_fd, &rfdset);
         FD_SET(listen_fd, &efdset);
+        FD_SET(zopen_fd, &rfdset);
         FD_SET(zopen_fd, &efdset);
         int maxIndex=max(zopen_fd,listen_fd);
         VSPI it;
@@ -157,13 +157,13 @@ int main(int argc,char * argv[])
                 unit.zopenFd=*it;
                 it=zopenList.erase(it);
                 connectedList.push_back(unit);
-                SYS_LOG(INFO,"new client connected %d and put in socklist size %d clientList size %d mList size %d\n"
+                SYS_LOG(INFO,"new client connected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
             }
             else
             { 
                 clientList.push_back(client);
-                SYS_LOG(INFO,"new client connected %d and socklist size %d put in clientList size %d mList size %d\n"
+                SYS_LOG(INFO,"new client connected %d and connectedList size %d put in clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
             }
         }
@@ -178,13 +178,13 @@ int main(int argc,char * argv[])
                 VSOCKI it=clientList.begin();
                 unit.clientFd=*it;
                 it=clientList.erase(it);
-                SYS_LOG(INFO,"new client connected %d and put in socklist size %d clientList size %d mList size %d\n"
+                SYS_LOG(INFO,"new client connected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
             }
             else
             {
                 zopenList.push_back(remoteSock);
-                SYS_LOG(INFO,"new client connected %d and socklist size %d clientList size %d put in mList size %d\n"
+                SYS_LOG(INFO,"new client connected %d and connectedList size %d clientList size %d put in mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
             }
         }
@@ -203,7 +203,7 @@ int main(int argc,char * argv[])
                 if(readlen<=0)
                 {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
                 }
@@ -212,7 +212,7 @@ int main(int argc,char * argv[])
                 if(ret<=0)
                 {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
                 }
@@ -224,7 +224,7 @@ int main(int argc,char * argv[])
                 if(readlen<=0)
                 {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
                 }
@@ -233,7 +233,7 @@ int main(int argc,char * argv[])
                 if(ret<=0)
                 {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
                 }
@@ -249,7 +249,7 @@ int main(int argc,char * argv[])
 	            if(readlen<=0)
 	            {
 	                vit=zopenList.erase(vit);
-	                SYS_LOG(INFO,"zopen disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+	                SYS_LOG(INFO,"zopen disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
 	                ,nready,connectedList.size(),clientList.size(),zopenList.size());
 	                continue;
 	            }
@@ -280,14 +280,14 @@ int main(int argc,char * argv[])
             if(FD_ISSET((*it).clientFd,&efdset))
             {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
             }
             if(FD_ISSET((*it).zopenFd,&efdset))
             {
                     it=closeFd(connectedList,it);
-                    SYS_LOG(INFO,"client disconnected %d and put in socklist size %d clientList size %d mList size %d\n"
+                    SYS_LOG(INFO,"client disconnected %d and put in connectedList size %d clientList size %d mList size %d\n"
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
                     continue;
             }

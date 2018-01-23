@@ -5,7 +5,7 @@
 using namespace baseservice;
 using namespace std;
 
-
+const int resConnectNum=5;
 
 void initLog()
 {
@@ -29,9 +29,25 @@ int createZopenConnect(VSOCK & list,int needSockNum,const char *host,int port)
         num++;
     }
     return num;
-        
-    
-    
+}
+void fillZopenSock(VSOCK & zopenList,int num,const char * ip,int port)
+{
+    int res=zopenList.size();
+    int ret=res;
+    if(ret<num)
+    {
+        int needSock=num-ret;
+        ret=createZopenConnect(zopenList,needSock,ip,port);
+        if(needSock==ret)
+        {
+            SYS_LOG(INFO,"createRConnect success need %d created:%d\n",needSock,ret);
+        }
+        else
+        {
+            SYS_LOG(INFO,"createRConnect fail need %d created:%d\n",needSock,ret);
+        }
+    }
+    SYS_LOG(INFO,"zopenList current %d need %d create %d\n",res,num-res,ret);
 }
 int main(int argc,char * argv[])
 {
@@ -89,6 +105,10 @@ int main(int argc,char * argv[])
        
         int maxIndex=0;
         VSPI it;
+        VSOCKI vit;
+        fillZopenSock(zopenList,resConnectNum,zopen_ip,zopen_port);
+
+        
         for(it=connectedList.begin();it!=connectedList.end();it++)
         {
             FD_SET((*it).clientFd, &efdset);
@@ -98,37 +118,28 @@ int main(int argc,char * argv[])
             maxIndex=max(maxIndex,(*it).clientFd);
             maxIndex=max(maxIndex,(*it).zopenFd);
         }
-        VSOCKI vit;
         for(vit=zopenList.begin();vit!=zopenList.end();vit++)
         {
             FD_SET((*vit), &efdset);
             FD_SET((*vit), &rfdset);
             maxIndex=max(maxIndex,(*vit));
         }
-        if(zopenList.size()<5)
-        {
-            int needSock=5-zopenList.size();
-            ret=createZopenConnect(zopenList,needSock,zopen_ip,zopen_port);
-            if(needSock==ret)
-            {
-                SYS_LOG(INFO,"createRConnect success need %d created:%d\n",needSock,ret);
-            }
-            else
-            {
-                SYS_LOG(INFO,"createRConnect fail need %d created:%d\n",needSock,ret);
-            }
-			usleep(100000); //slepp 100 ms
-        }
-        
         maxIndex+=1;
-        int nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
-       // int nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
+        int nready=0;
+        if(resConnectNum==zopenList.size())
+        {
+            nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
+        }
+        else
+        {
+            nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
+        }
+        SYS_LOG(INFO,"nready =%d\n",nready);
         if(nready==0)
         {
             usleep(10);
             continue;
         }
-        
         for(it=connectedList.begin();it!=connectedList.end();)
         {
             if(FD_ISSET((*it).clientFd,&rfdset))
@@ -150,6 +161,9 @@ int main(int argc,char * argv[])
             }
             if(FD_ISSET((*it).zopenFd,&rfdset))
             {
+                SYS_LOG(INFO,"zopenFd read data  connectedList size %d\tzopenList size %d\n",connectedList.size()
+				,zopenList.size());
+                
                 readlen=recv((*it).zopenFd, writebuf, 10240,0);
                 (*it).zopenData[0]+=readlen;
                 if(readlen<=0)
@@ -174,6 +188,8 @@ int main(int argc,char * argv[])
             {
                 int clientSock=*vit;
                 int localSock=createConnect(server_ip,server_port);
+				SYS_LOG(INFO,"connect client localSock %d connectedList size %d\tzopenList size %d\n",localSock,connectedList.size()
+				,zopenList.size());
                 if(localSock!=0)
                 {
                     SPair unit;
@@ -181,15 +197,14 @@ int main(int argc,char * argv[])
                     unit.zopenFd=localSock;
                     vit=zopenList.erase(vit);
                     connectedList.push_back(unit);
-					SYS_LOG(INFO,"connect client current connectedList size %d\tzopenList size %d\n"
-					,connectedList.size()
-					,zopenList.size());
+                    fillZopenSock(zopenList,resConnectNum,zopen_ip,zopen_port);
+                    SYS_LOG(INFO,"connectedList size %d zopenList size %d\n",connectedList.size(),zopenList.size());
 					continue;
                 }
             }
 			vit++;
         }
-		
+		//catch exception
         for(it=connectedList.begin();it!=connectedList.end();)
         {
             if(FD_ISSET((*it).zopenFd,&efdset))
