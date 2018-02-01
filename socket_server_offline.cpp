@@ -5,7 +5,16 @@
 using namespace baseservice;
 using namespace std;
 
-const int resConnectNum=5;
+
+inline int max(int a,int b)
+{
+    return a>b?a:b;
+}
+
+inline int min(int a,int b)
+{
+    return a<b?a:b;
+}
 
 void initLog()
 {
@@ -55,6 +64,8 @@ int main(int argc,char * argv[])
     initLog();
     VSOCK zopenList;
     VSP connectedList;
+	int resConnectNum=5;
+	int MaxConnectNum=100;
 	
 	int server_port;
 	char server_ip[1024];
@@ -197,6 +208,8 @@ int main(int argc,char * argv[])
                     unit.zopenFd=localSock;
                     vit=zopenList.erase(vit);
                     connectedList.push_back(unit);
+					resConnectNum=max(resConnectNum,connectedList.size()*2+5);
+					resConnectNum=min(resConnectNum,MaxConnectNum);
                     fillZopenSock(zopenList,resConnectNum,zopen_ip,zopen_port);
                     SYS_LOG(INFO,"connectedList size %d zopenList size %d\n",connectedList.size(),zopenList.size());
 					continue;

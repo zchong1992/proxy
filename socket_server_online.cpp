@@ -28,7 +28,8 @@ int main(int argc,char * argv[])
     connectedList.clear();
     clientList.clear();
     zopenList.clear();
-    
+
+	int maxClientNum=100;
 
     
     initLog();
@@ -161,10 +162,19 @@ int main(int argc,char * argv[])
                     ,nready,connectedList.size(),clientList.size(),zopenList.size());
             }
             else
-            { 
-                clientList.push_back(client);
-                SYS_LOG(INFO,"new client connected %d and connectedList size %d put in clientList size %d mList size %d\n"
-                    ,nready,connectedList.size(),clientList.size(),zopenList.size());
+            {
+            	if(clientList.size()+connectedList.size()>100)
+        		{
+        			close(client);
+		            SYS_LOG(INFO,"new client connected %d ,but client num is up and connectedList size %d put in clientList size %d mList size %d\n"
+		                ,nready,connectedList.size(),clientList.size(),zopenList.size());
+        		}
+				else
+				{
+		            clientList.push_back(client);
+		            SYS_LOG(INFO,"new client connected %d and connectedList size %d put in clientList size %d mList size %d\n"
+		                ,nready,connectedList.size(),clientList.size(),zopenList.size());
+				}
             }
         }
         //client_listen_sockfd  等待内网程序连接
@@ -256,10 +266,6 @@ int main(int argc,char * argv[])
         	}
 			vit++;
         }
-
-		
-/*
-        
         for(vit=clientList.begin();vit!=clientList.end();)
         {
     		readlen=recv((*vit), writebuf, 10240,0);
@@ -273,7 +279,6 @@ int main(int argc,char * argv[])
             }
 			vit++;
         }
-        */
         // catch exception
         for(it=connectedList.begin();it!=connectedList.end();)
         {
