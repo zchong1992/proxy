@@ -56,7 +56,6 @@ int check_is_ip(const char*str);
 int hostname_to_ip(const char * hostname , char* ip);
 VSPI CloseFd(VSP &A,VSPI it,const char * file,int line=0);
 
-
 int createConnect(const char *host,int port);
 #define closeFd(a,b) CloseFd(a,b,__FILE__,__LINE__)
 

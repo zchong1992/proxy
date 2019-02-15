@@ -10,7 +10,13 @@ socketPair::socketPair()
 }
 socketPair::socketPair(const socketPair &_A)
 {
-    memcpy(this,&_A,sizeof(socketPair));
+    //memcpy(this,&_A,sizeof(socketPair));
+    this->clientFd=_A.clientFd;
+    this->zopenFd=_A.zopenFd;
+    this->clientData[0]=_A.clientData[0];
+    this->clientData[1]=_A.clientData[1];
+    this->zopenData[0]=_A.zopenData[0];
+    this->zopenData[1]=_A.zopenData[1];
 }
 socketPair & socketPair::operator=(const socketPair &_A)
 {
