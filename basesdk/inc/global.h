@@ -1,7 +1,52 @@
 
 
+ /*!
+* \file global.h
+* \brief 被引用的标准库函数放在这里,为后期做编译优化而做的集中管理
+* \author zhengchong
+* \email  zhengchong@iristar.com.cn
+*/
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__    
+
+#ifdef  WIN32
+#define ZWINDOWS
+#else
+#define  ZLINUX
+#endif
+
+#ifdef ZWINDOWS
+#include <errno.h>
+#include <fcntl.h>
+#include <iostream>
+#include <string>
+#include <stdio.h>  
+#include <string.h>  
+#include <stdlib.h>  
+#include <sys/types.h>  
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+#include <cassert>
+#include <stdarg.h>  
+#include <time.h>   
+#include <map>
+#include <list>
+#include <vector>
+typedef int LOCKER;
+#define PTHREAD_LOCK(locker) 
+#define PTHRAED_INIT(locker)     
+#define PTHREAD_UNLOCK(locker)      
+#define PTHRAED_TRYLOCK(locker) 
+#endif
+#ifdef ZLINUX
+
+#include <sys/types.h>
+#include <sys/syscall.h>
 #include <arpa/inet.h> 
 #include <dirent.h> 
 #include <errno.h>
@@ -10,15 +55,11 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-
 #include <pthread.h>  
-
 #include <string>
-
 #include <stdio.h>  
 #include <string.h>  
 #include <stdlib.h>  
-
 #include <sys/types.h>  
 #include <sys/prctl.h>
 #include <sys/ipc.h>
@@ -33,86 +74,43 @@
 #include <string.h>
 #include <signal.h>
 #include <cassert>
-
 #include <stdarg.h>  
-#include <time.h>   
-
-#include <unistd.h>  
+#include <time.h>
+#include <unistd.h>
 #include <map>
 #include <list>
 #include <vector>
+typedef pthread_mutex_t LOCKER;
 
-
-
-typedef pthread_mutex_t LOCKER; 
-#if 0
-#define PTHRAED_LOCK(locker) 
-#define PTHRAED_INIT(locker)     
-#define PTHRAED_UNLOCK(locker)      
-#define PTHRAED_TRYLOCK(locker) 
-#else
 #define PTHRAED_INIT(locker)        pthread_mutex_init(locker,NULL)
-#define PTHRAED_LOCK(locker)           pthread_mutex_lock(locker)
-#define PTHRAED_UNLOCK(locker)           pthread_mutex_unlock(locker)
-#define PTHRAED_TRYLOCK(locker)      pthread_mutex_trylock(locker)
+#define PTHREAD_LOCK(locker)        pthread_mutex_lock(locker)
+#define PTHREAD_UNLOCK(locker)      pthread_mutex_unlock(locker)
+#define PTHRAED_TRYLOCK(locker)     pthread_mutex_trylock(locker)
+
 #endif
 
-
-extern size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
-extern size_t fwrite(const void *ptr, size_t size, size_t nmemb,FILE *stream);
-extern FILE *fopen(const char *path, const char *mode);
-extern FILE *fdopen(int fd, const char *mode);
-extern FILE *freopen(const char *path, const char *mode, FILE *stream);
-extern int fclose(FILE *fp);
-extern int printf(const char *format, ...);
-extern int fprintf(FILE *stream, const char *format, ...);
-extern int sprintf(char *str, const char *format, ...);
-extern int snprintf(char *str, size_t size, const char *format, ...);
-extern int vprintf(const char *format, va_list ap);
-extern int vfprintf(FILE *stream, const char *format, va_list ap);
-extern int vsprintf(char *str, const char *format, va_list ap);
-extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
-extern int fseek(FILE *stream, long offset, int whence);
-extern long ftell(FILE *stream);
-extern void rewind(FILE *stream);
-extern int fgetpos(FILE *stream, fpos_t *pos);
-extern int fsetpos(FILE *stream, fpos_t *pos);
-extern void *memcpy(void *dest, const void *src, size_t n);
-extern void *memset(void *s, int c, size_t n);
-extern void *malloc(size_t size);
-extern void free(void *ptr);
-extern void *calloc(size_t nmemb, size_t size);
-extern void *realloc(void *ptr, size_t size);
-
-
-namespace baseservice
-{
-    
+typedef int pid_t;
 #define SOCKET_ERROR            (-1)
-#define THIS_VERSION "2.0.7"
+#define THIS_VERSION "2.0.9"
 #ifdef WIN32
 #include <Winsock2.h>
-#include <wingdi.h>
 #include <windows.h>
-    
 #define   socklen_t int
-
 typedef SOCKET os_socket;
 
-    
+
 #else
-#include "global.h"
 #define Sleep(a) usleep(a*1000)
 #define closesocket close
 #define SOCKADDR sockaddr
-    
+
 #define BI_RGB        0L
 #define BI_RLE8       1L
 #define BI_RLE4       2L
 #define BI_BITFIELDS  3L
 #define BI_JPEG       4L
 #define BI_PNG        5L
-    
+
 typedef unsigned int  os_socket;
 typedef struct sockaddr_in SOCKADDR_IN;
 typedef unsigned long DWORD;
@@ -121,6 +119,10 @@ typedef unsigned short WORD;
 typedef unsigned char UCHAR;
 #endif
 
+
+
+namespace baseservice
+{
 
 #pragma pack(1)
 typedef struct mytagBITMAPINFOHEADER{
@@ -148,7 +150,7 @@ typedef struct mytagBITMAP_FILE{
       myBITMAPFILEHEADER header;
       myBITMAPINFOHEADER infoheader;
       //PALETTEENTRY palette[256];
-      UCHAR buffer[0];   //UCHAR ��С1�ֽ�(ͬBYTE), ��VC6��
+      UCHAR buffer[0];   //UCHAR 大小1字节(同BYTE), 在VC6下
  
 } BITMAP_FILE;
 typedef struct myhead{
@@ -162,21 +164,21 @@ typedef struct myhead{
 
 
 
-typedef unsigned long long UINT8;
-typedef unsigned int      UINT4;
-typedef unsigned short   UINT2;
-typedef unsigned char    UINT1;
-typedef long long     INT8;
-typedef int           INT4;
-typedef short           INT2;
-typedef char           INT1;
+typedef unsigned long long ZUINT8;
+typedef unsigned int      ZUINT4;
+typedef unsigned short   ZUINT2;
+typedef unsigned char    ZUINT1;
+typedef long long     ZINT8;
+typedef int           ZINT4;
+typedef short           ZINT2;
+typedef char           ZINT1;
 typedef  void*(* createdthread)(void*);
 void parseint(char *buf,int value);
 void parsestr(char *buf,char *str,int length);
 void parsebin(char *buf,unsigned char *bin,int length);
-UINT8 GetCurTimems();
-UINT8 GetCurTimeS();
-UINT8 GetCurTimeUs();
+ZUINT8 GetCurTimems();
+ZUINT8 GetCurTimeS();
+ZUINT8 GetCurTimeUs();
 const char *GetTimeString();
 const char *GetTimeStringOfMs();
 const char *GetTimeString2();
@@ -191,18 +193,20 @@ const std::string GetString(const long long value);
 int GetFileSize(FILE *fp);
 void munllfuncLOHIhVASASD32dre90();
 
-//void resort(UINT1 * start, UINT1 *end);
+//void resort(ZUINT1 * start, ZUINT1 *end);
 //void resort(INT1 * start, INT1 *end);
+/**
+* \brief resort 模板函数,做数据倒序
+*/
 template <typename Type>  void resort(Type * _start, Type *_end)
 {
-     
      int size=sizeof(Type);
      if(size<=0)
           return;
     
-    UINT1 _t=0;
-    UINT1 *start=(UINT1*)_start;
-    UINT1 *end=(UINT1*)_end;
+    ZUINT1 _t=0;
+    ZUINT1 *start=(ZUINT1*)_start;
+    ZUINT1 *end=(ZUINT1*)_end;
      end-=size;
      while(start<end)
      {
@@ -217,16 +221,18 @@ template <typename Type>  void resort(Type * _start, Type *_end)
           end-=size;
      }
 }
-
+/**
+* \brief resort 模板函数,做数据倒序
+*/
 template <typename Type>  void resort(Type * _start, Type *_end,int size)
 {
      
      if(size<=0)
           return;
     
-    UINT1 _t=0;
-    UINT1 *start=(UINT1*)_start;
-    UINT1 *end=(UINT1*)_end;
+    ZUINT1 _t=0;
+    ZUINT1 *start=(ZUINT1*)_start;
+    ZUINT1 *end=(ZUINT1*)_end;
      end-=size;
      while(start<end)
      {
@@ -241,12 +247,35 @@ template <typename Type>  void resort(Type * _start, Type *_end,int size)
           end-=size;
      }
 }
-
+#ifndef USE_VAR
+#define USE_VAR(a) if(&a==&a){}
+#endif
+/**
+* \brief cutOffTailOf_R_N_Space 删除字符串中首尾空格换行制表符
+*/
 void cutOffTailOf_R_N_Space(char *str);
+/**
+* \brief cutOffTailOf_R_N_Space 删除字符串中首尾空格换行制表符
+*/
 void cutOffTailOf_R_N_Space(char *str,int len);
 
+/**
+* \brief createthread 创建线程
+*/
 void *createthread(createdthread thread,void *mPara);
+
+/**
+* \brief set_thread_title 设置线程标题
+*/
 int set_thread_title(const char* fmt,...);
+long int gettid();
+#ifdef ZWINDOWS
+void usleep(int);
+#endif
+
+/**
+* \brief autolock 自动锁,构造时锁住,析构时解锁
+*/
 class autolock
 {
 public:

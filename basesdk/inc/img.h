@@ -1,4 +1,10 @@
 
+ /*!
+* \file img.h
+* \brief 为图像添加头部信息,可以以文件流的方式,存在于内存中,用于对android通讯的加速
+* \author zhengchong
+* \email  zhengchong@iristar.com.cn
+*/
 #ifndef __IMG_H__
 #define __IMG_H__
 
@@ -6,40 +12,25 @@
 #include "log.h"
 
 namespace baseservice{
-     struct baseImg_s
-    {
-         int width;
-        int height;
-        int widthStep;
-        int channels;
-        unsigned char *data;
-    };
-
+    
+/**
+* \brief 图像操作类,生成头部信息和jpeg转码操作
+*/
      class zkznImg
     {
     public:
-         static int jpeg2buf(UINT1 *dst,INT4 *buflen,UINT1 * inbuf,INT4 width ,INT4 height,INT4 channels,INT4 quality);
-        
-          static int  createbmpheader(unsigned char *buf,int *length,const int width,const int height,const int channels);
+    
+/**
+* \brief jpeg转码操作
+*/
+        static int jpeg2buf(ZUINT1 *dst,ZINT4 *buflen,ZUINT1 * inbuf,ZINT4 width ,ZINT4 height,ZINT4 channels,ZINT4 quality);
+            
+/**
+* \brief 图像操作类,生成bmp头部信息
+*/
+        static int  createbmpheader(unsigned char *buf,int *length,const int width,const int height,const int channels);
      };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif
 

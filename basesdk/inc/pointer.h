@@ -1,3 +1,11 @@
+
+ /*!
+* \file pointer.h
+* \brief 简单智能指针实现,未详细测试,后期替换为stl内智能指针
+* \author zhengchong
+* \email  zhengchong@iristar.com.cn
+*/
+
 #ifndef __POINTER_H__
 #define __POINTER_H__
 
@@ -9,7 +17,10 @@
 ///
 namespace baseservice
 {
-     template<typename T> class Pointer
+
+/**
+* \brief 智能指针类,自动析构删除buffer
+*/     template<typename T> class Pointer
      {
           public :
                T * _object;

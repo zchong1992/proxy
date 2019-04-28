@@ -1,6 +1,8 @@
 
 #ifndef __COMSTRUCT_H__
 #define __COMSTRUCT_H__
+#include "libbaseservice.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
@@ -22,7 +24,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdio.h> //printf
+#include <stdio.h>  //printf
 #include <string.h> //memset
 #include <stdlib.h> //for exit(0);
 #include <sys/socket.h>
@@ -30,11 +32,12 @@
 #include <netdb.h> //hostent
 #include <arpa/inet.h>
 #include <vector>
-#include "libbaseservice.h"
 
+#define closeFd(a, b) CloseFd(a, b, __FILE__, __LINE__)
 
-
-
+#define MYPORT 8887
+#define QUEUE 20
+#define BUFFER_SIZE 1024
 typedef struct socketPair
 {
     int clientFd;
@@ -43,22 +46,21 @@ typedef struct socketPair
     int zopenData[2];
     socketPair();
     socketPair(const socketPair &_A);
-    socketPair& operator=(const socketPair &_A);
-}SPair;
+    socketPair &operator=(const socketPair &_A);
+} SPair;
 
 typedef std::vector<SPair> VSP;
 typedef std::vector<SPair>::iterator VSPI;
 typedef std::vector<int> VSOCK;
 typedef std::vector<int>::iterator VSOCKI;
 
-int max(int a,int b);
-int check_is_ip(const char*str);
-int hostname_to_ip(const char * hostname , char* ip);
-VSPI CloseFd(VSP &A,VSPI it,const char * file,int line=0);
+int max(int a, int b);
+int check_is_ip(const char *str);
+int hostname_to_ip(const char *hostname, char *ip);
+VSPI CloseFd(VSP &A, VSPI it, const char *file, int line = 0);
 
-int createConnect(const char *host,int port);
-#define closeFd(a,b) CloseFd(a,b,__FILE__,__LINE__)
+int createConnect(const char *host, int port);
+int closeExpPair(VSP &connectedList, fd_set &efdset);
+int closeExpZSocket(VSOCK &zopenList, fd_set &efdset);
 
 #endif
-
-

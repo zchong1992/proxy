@@ -1,13 +1,14 @@
-/*
-autohor : zhengchong@tj.ia.ac.cn
-time 2017/11/20 
-I define smoe base Data type at here and every can add more Data type.but i wish 
-that we all working at the same identify mentality name rule.
-such as:  struct xxx_s{};  or  typedef struct xxx_s{}xxx_t;  
-
+ /*!
+* \file baseDataType.h
+* \brief 用于基本类型定义
+* \author zhengchong
+* \email  zhengchong@iristar.com.cn
 */
 namespace baseservice
 {
+/**
+* \brief baseKV_s kv数据结构,被其他接口调用
+*/
 	typedef struct baseKV_s
     {
     public:
@@ -16,6 +17,10 @@ namespace baseservice
     	void *data;
         long  len;
     }baseKV_t;
+
+/**
+* \brief memKV_s 内存kv数据结构,被其他接口调用
+*/
 	typedef struct memKV_s
     {
     public:
@@ -25,6 +30,9 @@ namespace baseservice
         long  len;
         long bufferlen;
     }memKV_t;
+/**
+* \brief baseImg_s 图像数据结构,被其他接口调用
+*/
     typedef struct baseImg_s
     { 
     /*

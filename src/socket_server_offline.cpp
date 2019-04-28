@@ -21,13 +21,6 @@ inline int min(int a, int b)
     return a < b ? a : b;
 }
 
-void initLog()
-{
-    znlog::getInstance()->Init();
-    znlog::getInstance()->set_level(INFO, INFO);
-    znlog::getInstance()->set_log_file("server_offline_log.txt");
-}
-
 int createZopenConnect(VSOCK &list, int needSockNum, const char *host, int port)
 {
     char remote_ipaddr[1024];
@@ -58,7 +51,7 @@ void fillZopenSock(VSOCK &zopenList, int num, const char *ip, int port)
         {
             ret = zopenList.size();
             zopenList.erase(zopenList.begin());
-            SYS_LOG(INFO, "zopenList current %d \n", ret);
+            SYS_LOG(ZLOGINFO, "zopenList current %d \n", ret);
         }
     }
     else
@@ -67,58 +60,16 @@ void fillZopenSock(VSOCK &zopenList, int num, const char *ip, int port)
         ret = createZopenConnect(zopenList, needSock, ip, port);
         if (needSock == ret)
         {
-            SYS_LOG(INFO, "createRConnect success need %d created:%d\n", needSock, ret);
+            SYS_LOG(ZLOGINFO, "createRConnect success need %d created:%d\n", needSock, ret);
         }
         else
         {
-            SYS_LOG(INFO, "createRConnect fail need %d created:%d\n", needSock, ret);
+            SYS_LOG(ZLOGINFO, "createRConnect fail need %d created:%d\n", needSock, ret);
         }
     }
-    SYS_LOG(INFO, "zopenList current %d need %d created %d\n", res, num - res, ret);
-}
-int closeExpPair(VSP &connectedList, fd_set &efdset)
-{
-    VSPI it;
-    int closeNum = 0;
-    for (it = connectedList.begin(); it != connectedList.end(); it++)
-    {
-        if (FD_ISSET((*it).zopenFd, &efdset))
-        {
-            VSPI itt = it++;
-            closeFd(connectedList, itt);
-            closeNum++;
-        }
-        if (FD_ISSET((*it).clientFd, &efdset))
-        {
-            VSPI itt = it++;
-            closeFd(connectedList, itt);
-            closeNum++;
-        }
-    }
-    return closeNum;
+    SYS_LOG(ZLOGINFO, "zopenList current %d need %d created %d\n", res, num - res, ret);
 }
 
-int closeExpZSocket(VSOCK &zopenList, fd_set &efdset)
-{
-    VSPI it;
-    int closeNum = 0;
-    VSOCKI vit;
-    for (vit = zopenList.begin(); vit != zopenList.end();)
-    {
-        if (FD_ISSET((*vit), &efdset))
-        {
-            VSOCKI vitt = vit++;
-            close(*vitt);
-            zopenList.erase(vitt);
-            closeNum++;
-        }
-        else
-        {
-            vit++;
-        }
-    }
-    return closeNum;
-}
 int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
 {
     VSOCKI vit;
@@ -131,7 +82,7 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
         {
             int clientSock = *vit;
             int localSock = createConnect(g_config.server_ip, g_config.server_port);
-            SYS_LOG(INFO, "connect client localSock %d connectedList size %d\tzopenList size %d\n", localSock, connectedList.size(), zopenList.size());
+            SYS_LOG(ZLOGINFO, "connect client localSock %d connectedList size %d\tzopenList size %d\n", localSock, connectedList.size(), zopenList.size());
             if (localSock != 0)
             {
                 SPair unit;
@@ -142,7 +93,7 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
                 connectedList.push_back(unit);
                 int zsockNum = max(5, connectedList.size() * 2 + 5);
                 zsockNum = min(zsockNum, 100);
-                SYS_LOG(INFO, "connectedList sock %d <---> %d\n", clientSock, localSock);
+                SYS_LOG(ZLOGINFO, "connectedList sock %d <---> %d\n", clientSock, localSock);
                 changeNum++;
                 break;
             }
@@ -187,7 +138,7 @@ int exchangeData(VSP &connectedList, fd_set &rfdset)
         }
         if (FD_ISSET((*it).zopenFd, &rfdset))
         {
-            // SYS_LOG(INFO,"zopenFd read data connectedList size %d\tzopenList size %d\n",connectedList.size()
+            // SYS_LOG(ZLOGINFO,"zopenFd read data connectedList size %d\tzopenList size %d\n",connectedList.size()
             // ,zopenList.size());
 
             readlen = recv((*it).zopenFd, writebuf, 10240, 0);
@@ -237,10 +188,8 @@ int getMaxIndex(VSP &connectedList, VSOCK &zopenList, fd_set &rfdset, fd_set &ef
     maxIndex += 1;
     return maxIndex;
 }
-int main(int argc, char *argv[])
+int off_main(int argc, char *argv[])
 {
-
-    initLog();
     VSOCK zopenList;
     VSP connectedList;
     int zsockNum = 5;
@@ -252,14 +201,14 @@ int main(int argc, char *argv[])
     zopenList.clear();
     if (argc < 5)
     {
-        SYS_LOG(INFO, "need server ip and port zopen ip and port\n", argc);
+        SYS_LOG(ZLOGINFO, "need server ip and port zopen ip and port\n", argc);
         return 0;
     }
     strcpy(g_config.server_ip, argv[1]);
     g_config.server_port = atoi(argv[2]);
     strcpy(g_config.zopen_ip, argv[3]);
     g_config.zopen_port = atoi(argv[4]);
-    SYS_LOG(INFO, "remote port [%s:%d] connect to [%s:%d]\n", g_config.server_ip, g_config.server_port, g_config.zopen_ip, g_config.zopen_port);
+    SYS_LOG(ZLOGINFO, "remote port [%s:%d] connect to [%s:%d]\n", g_config.server_ip, g_config.server_port, g_config.zopen_ip, g_config.zopen_port);
 
     char remote_ipaddr[1024];
     char local_ipaddr[1024];
@@ -313,11 +262,11 @@ int main(int argc, char *argv[])
         //catch exception
         if (closeExpPair(connectedList, efdset))
         {
-            SYS_LOG(INFO, "disconnect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
+            SYS_LOG(ZLOGINFO, "disconnect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
         }
         if (closeExpZSocket(zopenList, efdset))
         {
-            SYS_LOG(INFO, "connect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
+            SYS_LOG(ZLOGINFO, "connect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
         }
     }
 END:

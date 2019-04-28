@@ -1,42 +1,11 @@
 #include "com_struct.h"
 
-#define MYPORT 8887
-#define QUEUE 20
-#define BUFFER_SIZE 1024
 using namespace baseservice;
 using namespace std;
 
-void initLog()
-{
-    znlog::getInstance()->Init();
-    znlog::getInstance()->set_level(INFO, INFO);
-    znlog::getInstance()->set_log_file("server_online_log.txt");
-}
 inline int max(int a, int b)
 {
     return a > b ? a : b;
-}
-
-int closeExpPair(VSP &connectedList, fd_set &efdset)
-{
-    VSPI it;
-    int closeNum = 0;
-    for (it = connectedList.begin(); it != connectedList.end(); it++)
-    {
-        if (FD_ISSET((*it).zopenFd, &efdset))
-        {
-            VSPI itt = it++;
-            closeFd(connectedList, itt);
-            closeNum++;
-        }
-        if (FD_ISSET((*it).clientFd, &efdset))
-        {
-            VSPI itt = it++;
-            closeFd(connectedList, itt);
-            closeNum++;
-        }
-    }
-    return closeNum;
 }
 
 int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set &rfdset)
@@ -55,7 +24,7 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
             if (readlen <= 0)
             {
                 it = closeFd(connectedList, it);
-                SYS_LOG(INFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
                 continue;
             }
             int ret = send((*it).zopenFd, writebuf, readlen, 0);
@@ -63,7 +32,7 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
             if (ret <= 0)
             {
                 it = closeFd(connectedList, it);
-                SYS_LOG(INFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
                 continue;
             }
         }
@@ -74,7 +43,7 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
             if (readlen <= 0)
             {
                 it = closeFd(connectedList, it);
-                SYS_LOG(INFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
                 continue;
             }
             int ret = send((*it).clientFd, writebuf, readlen, 0);
@@ -83,7 +52,7 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
             {
 
                 it = closeFd(connectedList, it);
-                SYS_LOG(INFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "client disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
                 continue;
             }
         }
@@ -91,7 +60,7 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
     }
     return 0;
 }
-int main(int argc, char *argv[])
+int on_main(int argc, char *argv[])
 {
     VSP connectedList;
     VSOCK clientList;
@@ -104,10 +73,9 @@ int main(int argc, char *argv[])
 
     int maxClientNum = 100;
 
-    initLog();
     if (argc < 3)
     {
-        SYS_LOG(INFO, "need listen port zopen port\n", argc);
+        SYS_LOG(ZLOGINFO, "need listen port zopen port\n", argc);
         return 0;
     }
     listen_port = atoi(argv[1]);
@@ -203,7 +171,7 @@ int main(int argc, char *argv[])
         int nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
         if (nready == 0)
         {
-            //SYS_LOG(INFO,"select timeout %d\n",nready);
+            //SYS_LOG(ZLOGINFO,"select timeout %d\n",nready);
             usleep(10);
             continue;
         }
@@ -221,19 +189,19 @@ int main(int argc, char *argv[])
                 unit.zopenFd = *it;
                 it = zopenList.erase(it);
                 connectedList.push_back(unit);
-                SYS_LOG(INFO, "new client connected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "new client connected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
             }
             else
             {
                 if (clientList.size() + connectedList.size() > 100)
                 {
                     close(client);
-                    SYS_LOG(INFO, "new client connected %d ,but client num is up and connectedList size %d put in clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                    SYS_LOG(ZLOGINFO, "new client connected %d ,but client num is up and connectedList size %d put in clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
                 }
                 else
                 {
                     clientList.push_back(client);
-                    SYS_LOG(INFO, "new client connected %d and connectedList size %d put in clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                    SYS_LOG(ZLOGINFO, "new client connected %d and connectedList size %d put in clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
                 }
             }
         }
@@ -248,12 +216,12 @@ int main(int argc, char *argv[])
                 VSOCKI it = clientList.begin();
                 unit.clientFd = *it;
                 it = clientList.erase(it);
-                SYS_LOG(INFO, "new client connected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "new client connected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
             }
             else
             {
                 zopenList.push_back(remoteSock);
-                SYS_LOG(INFO, "new client connected %d and connectedList size %d clientList size %d put in mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "new client connected %d and connectedList size %d clientList size %d put in mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
             }
         }
 
@@ -269,7 +237,7 @@ int main(int argc, char *argv[])
                 {
                     VSOCKI vitt = vit++;
                     zopenList.erase(vitt);
-                    SYS_LOG(INFO, "zopen disconnected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                    SYS_LOG(ZLOGINFO, "zopen disconnected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
                     continue;
                 }
             }
@@ -282,14 +250,14 @@ int main(int argc, char *argv[])
             {
                 VSOCKI vitt = vit++;
                 zopenList.erase(vitt);
-                SYS_LOG(INFO, "client disconnected %d and put in socklist size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
+                SYS_LOG(ZLOGINFO, "client disconnected %d and put in socklist size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
                 continue;
             }
         }
         // catch exception
         if (closeExpPair(connectedList, efdset))
         {
-            SYS_LOG(INFO, "disconnect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
+            SYS_LOG(ZLOGINFO, "disconnect client current connectedList size %d\tzopenList size %d\n", connectedList.size(), zopenList.size());
         }
     }
 END:
