@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8)
+project(test)
+
+include_directories(../../3rdparty/basesdk)
+include_directories(../proxy)
+ADD_DEFINITIONS(-DTEST_CODE)
+file(GLOB SRC ../proxy/*.cpp)
+file(GLOB INC ../proxy/*.h)
+file(GLOB TEST_SRC *.cpp)
+set(SRC ${SRC} ${TEST_SRC})
+message("build proxy src:" ${SRC})
+message("build proxy inc:" ${INC})
+
+add_executable(test ${SRC} ${INC} )
+target_link_libraries(test baseservice pthread)
