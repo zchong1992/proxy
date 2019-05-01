@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(test)
 
+add_compile_options(-std=c++11 -g -O0)
 include_directories(../../3rdparty/basesdk)
 include_directories(../proxy)
 ADD_DEFINITIONS(-DTEST_CODE)

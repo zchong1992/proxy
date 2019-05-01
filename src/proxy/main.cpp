@@ -9,7 +9,7 @@ using namespace baseservice;
 using namespace std;
 void printHelp()
 {
-    printf("");
+    printf("printHelp ");
 }
 
 void initLog()
@@ -20,6 +20,9 @@ void initLog()
 }
 #ifndef TEST_CODE
 int main(int argc, char *argv[])
+#else
+int org_main(int argc, char *argv[])
+#endif
 {
     if (argc < 2)
     {
@@ -43,4 +46,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-#endif

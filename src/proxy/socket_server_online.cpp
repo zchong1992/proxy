@@ -80,6 +80,7 @@ int on_main(int argc, char *argv[])
     }
     listen_port = atoi(argv[1]);
     zopen_port = atoi(argv[2]);
+    SYS_LOG(ZLOGINFO, "set listen_port %d zopen port %d\n", listen_port, zopen_port);
 
     int zopen_fd = socket(AF_INET, SOCK_STREAM, 0);
     int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -101,7 +102,7 @@ int on_main(int argc, char *argv[])
 
     if (bind(zopen_fd, (struct sockaddr *)&zopen_ipaddr, sizeof(struct sockaddr_in)) == -1)
     {
-        perror("client_listen_sockfd");
+        perror("client_listen_sockfd ");
         exit(1);
     }
 
