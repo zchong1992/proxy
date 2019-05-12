@@ -48,6 +48,12 @@ typedef struct socketPair
     socketPair(const socketPair &_A);
     socketPair &operator=(const socketPair &_A);
 } SPair;
+typedef struct BaseDataStruct
+{
+    char magic[4];
+    unsigned short type;
+    unsigned int length;
+} BDS;
 
 typedef std::vector<SPair> VSP;
 typedef std::vector<SPair>::iterator VSPI;
