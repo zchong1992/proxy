@@ -69,7 +69,7 @@ void test_client()
         UseBuf[ret] = 0;
         printf("recv:[%s]\n\n", UseBuf);
     END:
-        usleep(10);
+        usleep(3000 * 1000);
     }
     if (UseBuf)
     {

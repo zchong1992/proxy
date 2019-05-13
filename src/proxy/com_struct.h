@@ -48,11 +48,22 @@ typedef struct socketPair
     socketPair(const socketPair &_A);
     socketPair &operator=(const socketPair &_A);
 } SPair;
-typedef struct BaseDataStruct
+
+enum DataTypeMsg : unsigned short
+{
+    HEARTBEAT = 100,
+    STARTDATA
+};
+typedef class BaseDataStruct
 {
     char magic[4];
     unsigned short type;
     unsigned int length;
+
+public:
+    void readHeader(unsigned short &type, unsigned int &size);
+    void writeHeader(unsigned short type, unsigned int size);
+    void isVaild();
 } BDS;
 
 typedef std::vector<SPair> VSP;

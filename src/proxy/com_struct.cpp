@@ -4,6 +4,23 @@
 using namespace baseservice;
 using namespace std;
 
+void BaseDataStruct::readHeader(unsigned short &type, unsigned int &size)
+{
+    memcpy(&type, &this->type, sizeof(unsigned short));
+    memcpy(&size, &this->length, sizeof(unsigned int));
+    type = ntohs(type);
+    size = ntohl(size);
+}
+void BaseDataStruct::writeHeader(unsigned short type, unsigned int size)
+{
+    type = ntohs(type);
+    size = ntohl(size);
+    memcpy(&this->type, &type, sizeof(unsigned short));
+    memcpy(&this->length, &size, sizeof(unsigned int));
+}
+void BaseDataStruct::isVaild()
+{
+}
 socketPair::socketPair()
 {
     memset(this, 0, sizeof(socketPair));

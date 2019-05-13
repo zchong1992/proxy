@@ -80,25 +80,51 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
     {
         if (FD_ISSET((*vit), &rfdset))
         {
-            int clientSock = *vit;
-            int localSock = createConnect(g_config.server_ip, g_config.server_port);
-            SYS_LOG(ZLOGINFO, "connect client localSock %d connectedList size %d\tzopenList size %d\n", localSock, connectedList.size(), zopenList.size());
-            if (localSock != 0)
+            BDS bds;
+            int msgRet = recv(*vit, &bds, sizeof(BDS), 0);
+            if (msgRet == sizeof(BDS))
             {
-                SPair unit;
-                unit.clientFd = clientSock;
-                unit.zopenFd = localSock;
-                VSOCKI vitt = vit++;
-                zopenList.erase(vitt);
-                connectedList.push_back(unit);
-                int zsockNum = max(5, connectedList.size() * 2 + 5);
-                zsockNum = min(zsockNum, 100);
-                SYS_LOG(ZLOGINFO, "connectedList sock %d <---> %d\n", clientSock, localSock);
-                changeNum++;
-                break;
+                unsigned short type;
+                unsigned int length;
+                bds.readHeader(type, length);
+                if (type == DataTypeMsg::HEARTBEAT)
+                {
+                    SYS_LOG(ZLOGINFO, "socket %d recv heartBeat\n", *vit);
+                    continue;
+                }
+                else if (type == DataTypeMsg::STARTDATA)
+                {
+                    int clientSock = *vit;
+                    int localSock = createConnect(g_config.server_ip, g_config.server_port);
+                    SYS_LOG(ZLOGINFO, "connect client localSock %d connectedList size %d\tzopenList size %d\n", localSock, connectedList.size(), zopenList.size());
+                    if (localSock != 0)
+                    {
+                        SPair unit;
+                        unit.clientFd = clientSock;
+                        unit.zopenFd = localSock;
+                        VSOCKI vitt = vit++;
+                        zopenList.erase(vitt);
+                        connectedList.push_back(unit);
+                        int zsockNum = max(5, connectedList.size() * 2 + 5);
+                        zsockNum = min(zsockNum, 100);
+                        SYS_LOG(ZLOGINFO, "connectedList sock %d <---> %d\n", clientSock, localSock);
+                        changeNum++;
+                        break;
+                    }
+                    else //connect local server fail
+                    {
+                        goto END;
+                    }
+                }
+                else
+                {
+                    goto END;
+                }
             }
-            else //connect local server fail
+            else
             {
+            END:
+                SYS_LOG(ZLOGINFO, "socket %d recv err msg\n", *vit);
             }
         }
     }
@@ -251,8 +277,10 @@ int off_main(int argc, char *argv[])
         {
             nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
         }
+
         if (nready == 0)
         {
+
             usleep(10);
             continue;
         }

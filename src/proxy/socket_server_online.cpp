@@ -60,6 +60,33 @@ int exchangeData(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList, fd_set
     }
     return 0;
 }
+
+void sendHeartBeat(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList)
+{
+    BDS heartPackage;
+    heartPackage.writeHeader(DataTypeMsg::HEARTBEAT, 0);
+    for (auto it = zopenList.begin(); it != zopenList.end(); it++)
+    {
+
+        int readlen = send(*it, &heartPackage, sizeof(BDS), 0);
+
+        SYS_LOG(ZLOGINFO, "sendHeartBeat ret $=%d\n", readlen);
+        if (readlen <= 0)
+        {
+            VSOCKI vitt = it++;
+            zopenList.erase(vitt);
+            SYS_LOG(ZLOGINFO, "zopen disconnected and put in connectedList size %d clientList size %d mList size %d\n", connectedList.size(), clientList.size(), zopenList.size());
+            continue;
+        }
+    }
+}
+
+void sendStartSig(SPair &sp)
+{
+    BDS heartPackage;
+    heartPackage.writeHeader(DataTypeMsg::STARTDATA, 0);
+    int readlen = send(sp.zopenFd, &heartPackage, sizeof(BDS), 0);
+}
 int on_main(int argc, char *argv[])
 {
     VSP connectedList;
@@ -131,6 +158,7 @@ int on_main(int argc, char *argv[])
     int tmpSocket = 0;
     char writebuf[10240];
     int readlen = 0;
+    int timeStamp = GetCurTimems();
     while (1)
     {
         FD_ZERO(&rfdset);
@@ -165,11 +193,20 @@ int on_main(int argc, char *argv[])
             FD_SET((*vit), &rfdset);
             maxIndex = max(maxIndex, (*vit));
         }
-        tv.tv_sec = 0;
+        tv.tv_sec = 1;
         tv.tv_usec = 0;
         maxIndex += 1;
-        //  int nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
-        int nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
+        int nready = select(maxIndex, &rfdset, NULL, &efdset, &tv);
+        //int nready = select(maxIndex, &rfdset, NULL, &efdset, 0);
+
+        int curTimeStamp = GetCurTimems();
+        // SYS_LOG(ZLOGINFO, "calc time %lu %lu\n", curTimeStamp, timeStamp);
+        if (curTimeStamp - timeStamp > 5 * 1000)
+        {
+            sendHeartBeat(connectedList, zopenList, clientList);
+            SYS_LOG(ZLOGINFO, "calc time %lu %lu sendHeartBeat\n", curTimeStamp, timeStamp);
+            timeStamp = curTimeStamp;
+        }
         if (nready == 0)
         {
             //SYS_LOG(ZLOGINFO,"select timeout %d\n",nready);
@@ -188,8 +225,10 @@ int on_main(int argc, char *argv[])
                 unit.clientFd = client;
                 VSOCKI it = zopenList.begin();
                 unit.zopenFd = *it;
+                sendStartSig(unit);
                 it = zopenList.erase(it);
                 connectedList.push_back(unit);
+
                 SYS_LOG(ZLOGINFO, "new client connected %d and put in connectedList size %d clientList size %d mList size %d\n", nready, connectedList.size(), clientList.size(), zopenList.size());
             }
             else
