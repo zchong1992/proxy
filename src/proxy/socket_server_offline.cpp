@@ -124,7 +124,11 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
             else
             {
             END:
-                SYS_LOG(ZLOGINFO, "socket %d recv err msg\n", *vit);
+                SYS_LOG(ZLOGINFO, "socket %d recv err msg close\n", *vit);
+                VSOCKI vitt = vit++;
+                close(*vitt);
+                zopenList.erase(vitt);
+                vit = zopenList.begin();
             }
         }
     }

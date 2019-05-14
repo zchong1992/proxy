@@ -48,11 +48,14 @@ typedef struct socketPair
     socketPair(const socketPair &_A);
     socketPair &operator=(const socketPair &_A);
 } SPair;
-
-enum DataTypeMsg : unsigned short
+class DataTypeMsg
 {
-    HEARTBEAT = 100,
-    STARTDATA
+public:
+    enum
+    {
+        HEARTBEAT = 100,
+        STARTDATA
+    };
 };
 typedef class BaseDataStruct
 {
