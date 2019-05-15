@@ -69,10 +69,10 @@ public:
     void isVaild();
 } BDS;
 
-typedef std::vector<SPair> VSP;
-typedef std::vector<SPair>::iterator VSPI;
-typedef std::vector<int> VSOCK;
-typedef std::vector<int>::iterator VSOCKI;
+typedef std::list<SPair> VSP;
+typedef std::list<SPair>::iterator VSPI;
+typedef std::list<int> VSOCK;
+typedef std::list<int>::iterator VSOCKI;
 
 int max(int a, int b);
 int check_is_ip(const char *str);

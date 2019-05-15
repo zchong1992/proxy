@@ -13,3 +13,5 @@ message("build proxy inc:" ${INC})
 
 add_executable(proxy ${SRC} ${INC} )
 target_link_libraries(proxy baseservice_static pthread)
+
+install(TARGETS proxy DESTINATION  "${CMAKE_CURRENT_SOURCE_DIR}/../../bin/")

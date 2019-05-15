@@ -75,9 +75,14 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
     VSOCKI vit;
     VSPI it;
     int changeNum = 0;
+    int errCode = 0;
     // ZSocket recv data ,make pair
     for (vit = zopenList.begin(); vit != zopenList.end(); vit++)
     {
+        if (zopenList.size() < 1)
+        {
+            break;
+        }
         if (FD_ISSET((*vit), &rfdset))
         {
             BDS bds;
@@ -89,7 +94,7 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
                 bds.readHeader(type, length);
                 if (type == DataTypeMsg::HEARTBEAT)
                 {
-                    SYS_LOG(ZLOGINFO, "socket %d recv heartBeat\n", *vit);
+                    //SYS_LOG(ZLOGINFO, "socket %d recv heartBeat\n", *vit);
                     continue;
                 }
                 else if (type == DataTypeMsg::STARTDATA)
@@ -113,6 +118,7 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
                     }
                     else //connect local server fail
                     {
+                        errCode = localSock;
                         goto END;
                     }
                 }
@@ -124,7 +130,8 @@ int makePairFromZSocket(VSOCK &zopenList, fd_set &rfdset, VSP &connectedList)
             else
             {
             END:
-                SYS_LOG(ZLOGINFO, "socket %d recv err msg close\n", *vit);
+                errCode = msgRet;
+                SYS_LOG(ZLOGINFO, "socket %d recv err msg close errCode %d\n", *vit, errCode);
                 VSOCKI vitt = vit++;
                 close(*vitt);
                 zopenList.erase(vitt);
@@ -234,11 +241,11 @@ int off_main(int argc, char *argv[])
         SYS_LOG(ZLOGINFO, "need server ip and port zopen ip and port\n", argc);
         return 0;
     }
-    strcpy(g_config.server_ip, argv[1]);
-    g_config.server_port = atoi(argv[2]);
-    strcpy(g_config.zopen_ip, argv[3]);
-    g_config.zopen_port = atoi(argv[4]);
-    SYS_LOG(ZLOGINFO, "remote port [%s:%d] connect to [%s:%d]\n", g_config.server_ip, g_config.server_port, g_config.zopen_ip, g_config.zopen_port);
+    strcpy(g_config.zopen_ip, argv[1]);
+    g_config.zopen_port = atoi(argv[2]);
+    strcpy(g_config.server_ip, argv[3]);
+    g_config.server_port = atoi(argv[4]);
+    SYS_LOG(ZLOGINFO, "zsocket port [%s:%d] connect to local server [%s:%d]\n", g_config.zopen_ip, g_config.zopen_port, g_config.server_ip, g_config.server_port);
 
     char remote_ipaddr[1024];
     char local_ipaddr[1024];
