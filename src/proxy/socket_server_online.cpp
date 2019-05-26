@@ -65,12 +65,13 @@ void sendHeartBeat(VSP &connectedList, VSOCK &zopenList, VSOCK &clientList)
 {
     BDS heartPackage;
     heartPackage.writeHeader(DataTypeMsg::HEARTBEAT, 0);
-    for (auto it = zopenList.begin(); it != zopenList.end(); it++)
+    auto it = zopenList.begin();
+    for (it = zopenList.begin(); it != zopenList.end(); it++)
     {
 
         int readlen = send(*it, &heartPackage, sizeof(BDS), 0);
 
-        SYS_LOG(ZLOGINFO, "sendHeartBeat ret $=%d\n", readlen);
+        //SYS_LOG(ZLOGINFO, "sendHeartBeat ret $=%d\n", readlen);
         if (readlen <= 0)
         {
             VSOCKI vitt = it++;
@@ -204,7 +205,7 @@ int on_main(int argc, char *argv[])
         if (curTimeStamp - timeStamp > 5 * 1000)
         {
             sendHeartBeat(connectedList, zopenList, clientList);
-            SYS_LOG(ZLOGINFO, "calc time %lu %lu sendHeartBeat\n", curTimeStamp, timeStamp);
+            //SYS_LOG(ZLOGINFO, "calc time %lu %lu sendHeartBeat\n", curTimeStamp, timeStamp);
             timeStamp = curTimeStamp;
         }
         if (nready == 0)

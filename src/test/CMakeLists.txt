@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(test)
 
 add_compile_options(-std=c++11 -g -O0)
+message("add_compile_options(-std=c++11  -g -O0)")
 include_directories(../../3rdparty/basesdk)
 include_directories(../proxy)
 ADD_DEFINITIONS(-DTEST_CODE)
@@ -13,4 +14,4 @@ message("build proxy src:" ${SRC})
 message("build proxy inc:" ${INC})
 
 add_executable(test ${SRC} ${INC} )
-target_link_libraries(test baseservice pthread)
+target_link_libraries(test baseservice_static pthread)
